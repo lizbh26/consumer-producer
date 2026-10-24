@@ -100,17 +100,17 @@ fn sleep(self: *Self) void {
     self.produced = null;
 }
 
-fn isFinished(self: *Self) bool {
+fn isFinished(self: Self) bool {
     return self.left_to_produce == 0;
 }
-pub fn isProducing(self: *Self) bool {
+pub fn isProducing(self: Self) bool {
     return self.left_to_produce > 0 and self.ms_to_produce > 0;
 }
-pub fn isSleeping(self: *Self) bool {
+pub fn isSleeping(self: Self) bool {
     return self.ms_to_sleep > 0;
 }
 
-pub fn isBlocked(self: *Self) bool {
+pub fn isBlocked(self: Self) bool {
     return self.blocked_by_monitor;
 }
 pub fn block(self: *Self) void {
@@ -120,7 +120,7 @@ pub fn unblock(self: *Self) void {
     self.blocked_by_monitor = false;
 }
 
-pub fn getState(self: *Self) enum { Producing, Blocked, Sleeping } {
+pub fn getState(self: Self) enum { Producing, Blocked, Sleeping } {
     if (self.isBlocked()) return .Blocked;
     if (self.isProducing()) return .Producing;
     if (self.isSleeping()) return .Sleeping;

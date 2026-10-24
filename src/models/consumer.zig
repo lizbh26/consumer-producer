@@ -89,17 +89,17 @@ fn sleep(self: *Self) void {
     self.consumed = null;
 }
 
-fn isFinished(self: *Self) bool {
+fn isFinished(self: Self) bool {
     return self.left_to_consume == 0;
 }
-pub fn isConsuming(self: *Self) bool {
+pub fn isConsuming(self: Self) bool {
     return self.left_to_consume > 0 and self.ms_to_consume > 0;
 }
-pub fn isSleeping(self: *Self) bool {
+pub fn isSleeping(self: Self) bool {
     return self.ms_to_sleep > 0;
 }
 
-pub fn isBlocked(self: *Self) bool {
+pub fn isBlocked(self: Self) bool {
     return self.blocked_by_monitor;
 }
 pub fn block(self: *Self) void {

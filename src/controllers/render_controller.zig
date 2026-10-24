@@ -5,6 +5,8 @@ const Key = vaxis.Key;
 
 const ContextController = @import("context_controller.zig");
 
+const MainView = @import("../views/main_view.zig");
+
 const Self = @This();
 
 pub const MIN_SCREEN_WIDTH = 125;
@@ -18,6 +20,8 @@ vx: vaxis.Vaxis,
 
 context: *const ContextController,
 
+main_view: MainView,
+
 pub fn init(alloc: std.mem.Allocator, io: std.Io, ctx: *const ContextController) !Self {
     const self = Self{
         .alloc = alloc,
@@ -25,6 +29,11 @@ pub fn init(alloc: std.mem.Allocator, io: std.Io, ctx: *const ContextController)
         .tty = undefined,
         .vx = undefined,
         .context = ctx,
+        .main_view = .init(alloc, .{
+            .consumer = &ctx.consumer,
+            .producer = &ctx.producer,
+            .container = &ctx.monitor.container,
+        }),
     };
     self.tty = try vaxis.Tty.init(io, &self.buffer);
     errdefer self.tty.deinit();
