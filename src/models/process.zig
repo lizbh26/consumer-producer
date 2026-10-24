@@ -1,21 +1,26 @@
 const Self = @This();
 
 impl: *anyopaque,
-v_execute: *const fn (*anyopaque) void,
+v_block: *const fn (*anyopaque) void,
+v_unblock: *const fn (*anyopaque) void,
 
 pub fn implBy(impl_obj: anytype) Self {
     const delegate = ProcessDelegate(impl_obj);
     return .{
         .impl = impl_obj,
-        .v_execute = delegate.execute,
+        .v_block = delegate.block,
+        .v_unblock = delegate.unblock,
     };
 }
 
 inline fn ProcessDelegate(impl_object: anytype) type {
     const ImplType = @TypeOf(impl_object);
     return struct {
-        fn execute(impl: *anyopaque) void {
-            TPtr(ImplType, impl).execute();
+        fn block(impl: *anyopaque) void {
+            TPtr(ImplType, impl).block();
+        }
+        fn unblock(impl: *anyopaque) void {
+            TPtr(ImplType, impl).unblock();
         }
     };
 }
