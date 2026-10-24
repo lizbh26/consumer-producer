@@ -1,0 +1,46 @@
+const std = @import("std");
+const zeit = @import("zeit");
+
+const Monitor = @import("~").models.Monitor;
+const Consumer = @import("~").models.Consumer;
+const Producer = @import("~").models.Producer;
+
+const Self = @This();
+
+monitor: Monitor,
+consumer: Consumer,
+producer: Producer,
+
+randomSource: std.Random.IoSource,
+
+prev_tick: ?zeit.Instant,
+ellapsed_ms: i128,
+is_paused: bool,
+
+pub fn init(alloc: std.mem.Allocator, io: std.Io) Self {
+    const arena = std.heap.ArenaAllocator.init(alloc);
+
+    const self = Self{
+        .monitor = .init(arena.allocator()),
+        .consumer = .{},
+        .producer = .{},
+        .randomSource = .{ .io = io },
+        .ellapsed_ms = 0,
+        .is_paused = false,
+    };
+    self.consumer = .init(self.monitor, self.randomSource.interface());
+    self.producer = .init(self.monitor, self.randomSource.interface());
+
+    return self;
+}
+
+pub fn tick(self: *Self, now: zeit.Instant) void {
+    if (self.prev_tick) |prev| {
+        const delta_nano = now.timestamp - prev.timestamp;
+        const delta_ms = zeit.instant(.{ .unix_nano = delta_nano }, &zeit.utc).milliTimestamp();
+
+        self.consumer.tick(delta_ms);
+        self.producer.tick(delta_ms);
+    }
+    self.prev_tick = now;
+}

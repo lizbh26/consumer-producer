@@ -1,4 +1,13 @@
 const std = @import("std");
-const Io = std.Io;
 
-pub fn main(init: std.process.Init) !void {}
+const Controller = @import("controllers/application_controller.zig");
+
+pub fn main(init: std.process.Init) !void {
+    var controller: Controller = .init(init);
+    defer controller.deinit();
+
+    controller.startLoop() catch |err| switch (err) {
+        error.TerminalSize => std.log.err("Tu terminal es demasiado pequeña o no es soportada por este programa; el tamaño mínimo es {d}x{d}", .{ Controller.MIN_SCREEN_WIDTH, Controller.MIN_SCREEN_HEIGHT }),
+        else => std.log.err("Ocurrio un error inesperado.", .{}),
+    };
+}
