@@ -24,17 +24,17 @@ const RenderContext = struct {
 ctx: RenderContext,
 container_view: ContainerView,
 
-pub fn init(alloc: std.mem.Allocator, ctx: RenderContext) Self {
+pub fn init(alloc: std.mem.Allocator, ctx: RenderContext) !Self {
     return .{
         .ctx = ctx,
-        .container_view = .init(alloc, ctx.container),
+        .container_view = try .init(alloc, ctx.container),
     };
 }
 
-pub fn draw(self: *Self, win: Window) void {
+pub fn draw(self: *Self, win: Window) !void {
     const containerChild = win.child(.{
         .width = win.width,
         .height = @divFloor(win.height, 2),
     });
-    self.container_view.draw(containerChild);
+    try self.container_view.draw(containerChild);
 }

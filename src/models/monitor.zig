@@ -2,22 +2,25 @@ const std = @import("std");
 
 const Condition = @import("condition.zig");
 const Process = @import("process.zig");
+const Container = @import("container.zig");
 
-const Container = @import("~").models.Container;
-const Queue = @import("~").utils.Queue;
+const Queue = @import("../utils/queue.zig").Queue;
 
 const Self = @This();
+
+alloc: std.mem.Allocator,
 
 notfull: Condition,
 notempty: Condition,
 
-buffer: Container,
+container: Container,
 
-fn init(alloc: std.mem.Allocator) !Self {
+pub fn init(alloc: std.mem.Allocator) !Self {
     return .{
+        .alloc = alloc,
         .notempty = try .init(alloc),
         .notfull = try .init(alloc),
-        .buffer = .init(),
+        .container = .init(),
     };
 }
 
@@ -26,30 +29,31 @@ pub fn append(
     p: *Process,
     x: Container.CONTAINER_ELEMENT,
 ) bool {
-    if (self.buffer.isFull()) {
-        cwait(p, self.notfull) catch void;
+    if (self.container.isFull()) {
+        cwait(p, &self.notfull) catch {};
         return false;
     }
-    self.buffer.write(x) catch unreachable;
+    self.container.write(x) catch unreachable;
 
-    csignal(self.notempty) catch void;
+    csignal(self.alloc, &self.notempty) catch {};
     return true;
 }
 pub fn take(self: *Self, p: *Process) ?Container.CONTAINER_ELEMENT {
-    if (self.buffer.isEmpty()) {
-        cwait(p, self.notempty) catch void;
+    if (self.container.isEmpty()) {
+        cwait(p, &self.notempty) catch {};
         return null;
     }
 
-    csignal(self.notfull) catch void;
-    return self.buffer.read() catch unreachable;
+    csignal(self.alloc, &self.notfull) catch {};
+    return self.container.read() catch unreachable;
 }
 
 fn cwait(p: *Process, c: *Condition) !void {
-    p.v_block();
+    p.v_block(p);
     try c.wait(p); // Fails if no memory is left to grow wait queue
 }
-fn csignal(c: *Condition) !*Process {
+fn csignal(alloc: std.mem.Allocator, c: *Condition) !void {
     const p = try c.signal();
-    p.v_unblock();
+    p.v_unblock(p);
+    alloc.destroy(p);
 }

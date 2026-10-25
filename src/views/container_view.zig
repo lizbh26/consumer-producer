@@ -4,7 +4,7 @@ const vaxis = @import("vaxis");
 const Key = vaxis.Key;
 const Window = vaxis.Window;
 
-const usize_to = @import("~").utils.usize_to;
+const usizeTo = @import("~").utils.usizeTo;
 const Container = @import("~").models.Container;
 const Label = @import("components/label.zig");
 
@@ -19,7 +19,7 @@ const ContainerCard = struct {
     _bufferContentLabel: Label,
 
     pub fn init(alloc: std.mem.Allocator, index: usize) !ContainerCard {
-        const self = ContainerCard{
+        var self = ContainerCard{
             ._alloc = alloc,
             ._bufferIndexLabel = .init(alloc),
             ._bufferContentLabel = .init(alloc),
@@ -29,37 +29,38 @@ const ContainerCard = struct {
     }
 
     pub fn setContent(self: *ContainerCard, elem: ?*const Container.CONTAINER_ELEMENT) !void {
-        if (elem) |num| {
-            var chars = try self._alloc.alloc(u8, 6);
-            chars[0] = "0";
-            chars[1] = "x";
-            for (2..chars.len) |i| {
-                const hex = num & 0xF;
-                chars[i] = switch (hex) {
-                    0 => '0',
-                    1 => '1',
-                    2 => '2',
-                    3 => '3',
-                    4 => '4',
-                    5 => '5',
-                    6 => '6',
-                    7 => '7',
-                    8 => '8',
-                    9 => '9',
-                    10 => 'A',
-                    11 => 'B',
-                    12 => 'C',
-                    13 => 'D',
-                    14 => 'F',
-                    15 => 'E',
-                    else => unreachable,
-                };
-                num >>= 4;
-            }
-            self._bufferContentLabel.changeText(chars);
-        } else {
-            self._bufferContentLabel.changeText("");
+        var num = (elem orelse {
+            return self._bufferContentLabel.changeText("");
+        }).*;
+
+        var chars = try self._alloc.alloc(u8, 6);
+        chars[0] = '0';
+        chars[1] = 'x';
+
+        for (2..chars.len) |i| {
+            const hex = num & 0xF;
+            chars[i] = switch (hex) {
+                0 => '0',
+                1 => '1',
+                2 => '2',
+                3 => '3',
+                4 => '4',
+                5 => '5',
+                6 => '6',
+                7 => '7',
+                8 => '8',
+                9 => '9',
+                10 => 'A',
+                11 => 'B',
+                12 => 'C',
+                13 => 'D',
+                14 => 'F',
+                15 => 'E',
+                else => unreachable,
+            };
+            num >>= 4;
         }
+        try self._bufferContentLabel.changeText(chars);
     }
 
     pub fn draw(self: *ContainerCard, win: Window) !void {
@@ -78,7 +79,7 @@ const ContainerCard = struct {
         });
         self._bufferIndexLabel.draw(indexChild);
 
-        const contentWidth = self._bufferContentLabel.getWidth();
+        const contentWidth = usizeTo(u16, self._bufferContentLabel.getWidth());
         const contentChild = container.child(.{
             .x_off = container.width - contentWidth,
             .y_off = 2,
@@ -97,8 +98,8 @@ _scroll: u16,
 _current_width: u16,
 
 pub fn init(alloc: std.mem.Allocator, container: *const Container) !Self {
-    const self = Self{
-        ._cards = .{},
+    var self = Self{
+        ._cards = undefined,
         ._container = container,
         ._title = .init(alloc),
         ._scroll = 0,
@@ -121,11 +122,11 @@ pub fn handleInput(self: *Self, key: Key) void {
     }
 }
 
-pub fn draw(self: *Self, win: Window) void {
+pub fn draw(self: *Self, win: Window) !void {
     var idx = self._container.head;
     for (0..self._cards.len) |i| {
+        try self._cards[idx].setContent(if (i < self._container.len) &self._container.buffer[idx] else null);
         idx = self._container.getNext(idx);
-        self._cards[idx].setContent(if (i < self._container.len) self._container[idx] else null);
     }
 
     const winContainer = win.child(.{
@@ -134,7 +135,7 @@ pub fn draw(self: *Self, win: Window) void {
         .border = .{ .where = .top, .style = .{ .fg = .{ .index = 255 } } },
     });
 
-    const titleWidth = usize_to(u16, self._title.getWidth());
+    const titleWidth = usizeTo(u16, self._title.getWidth());
     const titleChild = winContainer.child(.{
         .x_off = @divFloor(winContainer.width - titleWidth, 2),
         .y_off = 1,
@@ -148,20 +149,24 @@ pub fn draw(self: *Self, win: Window) void {
     for (self._scroll..measures.rows) |i| {
         for (0..measures.cols) |j| {
             const child = winContainer.child(.{
-                .x_off = measures.padLeft + (ContainerCard.WIDTH + 2) * j,
-                .y_off = 1 + (ContainerCard.WIDTH + 2) * j,
+                .x_off = usizeTo(i17, measures.padLeft + (ContainerCard.WIDTH + 2) * j),
+                .y_off = usizeTo(i17, 1 + (ContainerCard.WIDTH + 2) * j),
                 .width = ContainerCard.WIDTH,
                 .height = ContainerCard.HEIGHT,
             });
-            self._cards[i * measures.cols + j].draw(child);
+            try self._cards[i * measures.cols + j].draw(child);
         }
     }
 }
 fn getCardTableMeasurements(self: *Self) struct { rows: u16, cols: u16, padLeft: u16 } {
     const cardWidth = ContainerCard.WIDTH + 2;
-    const cardsPerRow = @divFloor(self._current_width, cardWidth);
+    const cardsPerRow: u16 = @divFloor(self._current_width, cardWidth);
 
-    const paddingLeft = @divFloor(self._current_width - cardWidth * cardsPerRow, 2);
+    const paddingLeft: u16 = @divFloor(self._current_width - cardWidth * cardsPerRow, 2);
 
-    return .{ .cols = cardsPerRow, .padLeft = paddingLeft, .rows = @divFloor(self._cards.len, cardsPerRow) + 1 };
+    return .{
+        .cols = cardsPerRow,
+        .rows = @divFloor(usizeTo(u16, self._cards.len), cardsPerRow) + 1,
+        .padLeft = paddingLeft,
+    };
 }

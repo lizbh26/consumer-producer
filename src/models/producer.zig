@@ -1,12 +1,14 @@
 const std = @import("std");
 
-const Monitor = @import("monitor/monitor.zig");
-const Process = @import("monitor/process.zig");
+const Monitor = @import("monitor.zig");
+const Process = @import("process.zig");
 const Container = @import("container.zig");
 
 const Self = @This();
 
-monitor: *const Monitor,
+alloc: std.mem.Allocator,
+
+monitor: *Monitor,
 blocked_by_monitor: bool,
 
 produced: ?Container.CONTAINER_ELEMENT,
@@ -18,8 +20,10 @@ ms_worked: i128,
 
 random: std.Random,
 
-pub fn init(m: *Monitor, random: std.Random) Self {
-    const self = Self{
+pub fn init(alloc: std.mem.Allocator, m: *Monitor, random: std.Random) Self {
+    var self = Self{
+        .alloc = alloc,
+
         .monitor = m,
         .blocked_by_monitor = false,
 
@@ -36,7 +40,7 @@ pub fn init(m: *Monitor, random: std.Random) Self {
     return self;
 }
 
-pub fn tick(self: *Self, delta: i128) void {
+pub fn tick(self: *Self, delta: i128) !void {
     if (self.isBlocked()) return;
 
     if (self.isSleeping()) {
@@ -56,7 +60,7 @@ pub fn tick(self: *Self, delta: i128) void {
     if (self.produced == null)
         self.produce();
 
-    if (!self.monitor.append(self.produced.?))
+    if (!try self.criticalAppend())
         return;
 
     self.left_to_produce -= 1;
@@ -92,6 +96,11 @@ fn produce(self: *Self) void {
         std.math.minInt(Container.CONTAINER_ELEMENT),
         std.math.maxInt(Container.CONTAINER_ELEMENT),
     );
+}
+fn criticalAppend(self: *Self) !bool {
+    const ptr = try self.alloc.create(Process);
+    ptr.* = Process.implBy(self);
+    return self.monitor.append(ptr, self.produced.?);
 }
 
 fn sleep(self: *Self) void {

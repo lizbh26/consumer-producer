@@ -1,12 +1,12 @@
 const std = @import("std");
 
-const Queue = @import("~").utils.Queue;
+const Queue = @import("../utils/queue.zig").Queue;
 const Process = @import("process.zig");
 
 const CSelf = @This();
 
 len: usize,
-waitQ: Queue(*Process),
+waitQ: Queue(Process),
 
 pub fn init(alloc: std.mem.Allocator) !CSelf {
     return .{

@@ -4,7 +4,7 @@ const vaxis = @import("vaxis");
 const Window = vaxis.Window;
 const TextView = vaxis.widgets.TextView;
 
-const count_utf8 = @import("~").utils.count_utf8;
+const countUtf8 = @import("~").utils.countUtf8;
 
 const Self = @This();
 
@@ -32,7 +32,7 @@ pub fn getText(self: *const Self) []const u8 {
     return self.buffer.content.items;
 }
 pub fn getWidth(self: *const Self) usize {
-    return count_utf8(self.getText()) + 1;
+    return countUtf8(self.getText()) + 1;
 }
 
 pub fn changeText(self: *Self, newText: []const u8) !void {
