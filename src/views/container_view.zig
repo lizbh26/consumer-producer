@@ -144,20 +144,33 @@ pub fn draw(self: *Self, win: Window) !void {
     self._title.draw(titleChild);
 
     self._current_width = winContainer.width;
+    try self.renderCards(winContainer);
+}
+fn renderCards(self: *Self, winContainer: Window) !void {
     const measures = self.getCardTableMeasurements();
 
+    var accHeight: u16 = ContainerCard.HEIGHT;
+    var idx: usize = 0;
+
     for (self._scroll..measures.rows) |i| {
+        if (accHeight > winContainer.height) break;
+
         for (0..measures.cols) |j| {
+            if (idx == self._cards.len) return;
+
             const child = winContainer.child(.{
                 .x_off = usizeTo(i17, measures.padLeft + (ContainerCard.WIDTH + 2) * j),
-                .y_off = usizeTo(i17, 1 + (ContainerCard.WIDTH + 2) * j),
+                .y_off = usizeTo(i17, 1 + (ContainerCard.WIDTH + 2) * i),
                 .width = ContainerCard.WIDTH,
                 .height = ContainerCard.HEIGHT,
             });
-            try self._cards[i * measures.cols + j].draw(child);
+            try self._cards[idx].draw(child);
+            idx += 1;
         }
+        accHeight += ContainerCard.HEIGHT;
     }
 }
+
 fn getCardTableMeasurements(self: *Self) struct { rows: u16, cols: u16, padLeft: u16 } {
     const cardWidth = ContainerCard.WIDTH + 2;
     const cardsPerRow: u16 = @divFloor(self._current_width, cardWidth);
@@ -166,7 +179,7 @@ fn getCardTableMeasurements(self: *Self) struct { rows: u16, cols: u16, padLeft:
 
     return .{
         .cols = cardsPerRow,
-        .rows = @divFloor(usizeTo(u16, self._cards.len), cardsPerRow) + 1,
+        .rows = @divFloor(usizeTo(u16, self._cards.len), @max(cardsPerRow, 1)) + 1,
         .padLeft = paddingLeft,
     };
 }
