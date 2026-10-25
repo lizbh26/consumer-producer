@@ -59,7 +59,6 @@ pub fn deinit(self: *Self) void {
 
 pub fn startEventLoop(self: *Self) !void {
     try self.loop.start();
-    defer self.loop.stop();
 
     const writer = self.tty.writer();
     // Sends queries to terminal to detect certain features. This should
@@ -70,6 +69,9 @@ pub fn startEventLoop(self: *Self) !void {
     defer self.vx.exitAltScreen(writer) catch {};
 
     try self.vx.setMouseMode(writer, false);
+}
+pub fn stopEventLoop(self: *Self) void {
+    self.loop.stop();
 }
 
 pub fn handleEvents(self: *Self) !bool {

@@ -38,6 +38,7 @@ pub fn deinit(self: *Self) void {
 
 pub fn startLoop(self: *Self) !void {
     try self.renderer.startEventLoop();
+    defer self.renderer.stopEventLoop();
 
     var frameStart = self.getNow();
 
