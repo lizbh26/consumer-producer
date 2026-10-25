@@ -12,24 +12,31 @@ const Self = @This();
 pub const MIN_SCREEN_WIDTH = 125;
 pub const MIN_SCREEN_HEIGHT = 30;
 
+// Vaxis event type
+const Event = union(enum) { key_press: vaxis.Key, winsize: vaxis.Winsize, focus_in };
+
 alloc: std.mem.Allocator,
 
 buffer: [1024]u8,
 tty: vaxis.Tty,
 vx: vaxis.Vaxis,
+loop: vaxis.Loop(Event),
 
-context: *const ContextController,
+context: *ContextController,
 
 main_view: MainView,
 
-pub fn init(alloc: std.mem.Allocator, io: std.Io, ctx: *const ContextController) !Self {
-    const self = Self{
+pub fn init(alloc: std.mem.Allocator, io: std.Io, environ_map: *std.process.Environ.Map, ctx: *ContextController) !Self {
+    var self = Self{
         .alloc = alloc,
+
         .buffer = undefined,
         .tty = undefined,
         .vx = undefined,
+        .loop = undefined,
+
         .context = ctx,
-        .main_view = .init(alloc, .{
+        .main_view = try .init(alloc, .{
             .consumer = &ctx.consumer,
             .producer = &ctx.producer,
             .container = &ctx.monitor.container,
@@ -38,8 +45,21 @@ pub fn init(alloc: std.mem.Allocator, io: std.Io, ctx: *const ContextController)
     self.tty = try vaxis.Tty.init(io, &self.buffer);
     errdefer self.tty.deinit();
 
-    self.vx = try vaxis.init(io, alloc, .{}, .{});
+    self.vx = try vaxis.init(io, alloc, environ_map, .{});
     errdefer self.vx.deinit(alloc, self.tty.writer());
+
+    self.loop = .init(io, &self.tty, &self.vx);
+
+    return self;
+}
+pub fn deinit(self: *Self) void {
+    self.vx.deinit(self.alloc, self.tty.writer());
+    self.tty.deinit();
+}
+
+pub fn startEventLoop(self: *Self) !void {
+    try self.loop.start();
+    defer self.loop.stop();
 
     const writer = self.tty.writer();
     // Sends queries to terminal to detect certain features. This should
@@ -50,28 +70,34 @@ pub fn init(alloc: std.mem.Allocator, io: std.Io, ctx: *const ContextController)
     defer self.vx.exitAltScreen(writer) catch {};
 
     try self.vx.setMouseMode(writer, false);
-
-    return self;
-}
-pub fn deinit(self: *Self) void {
-    self.vx.deinit(self.alloc, self.tty.writer());
-    self.tty.deinit();
 }
 
-pub fn handleInput(self: *Self, key: Key) void {
-    if (key.matches(Key.Escape)) {
-        return true;
-    } else if (key.matches('l', .{ .ctrl = true })) {
-        self.vx.queueRefresh();
-    } else if (self.context.is_paused) {
+pub fn handleEvents(self: *Self) !bool {
+    while (try self.loop.tryEvent()) |event| {
+        switch (event) {
+            .key_press => |key| {
+                if (key.matches(Key.escape, .{})) {
+                    return true;
+                } else if (key.matches('l', .{ .ctrl = true })) {
+                    self.vx.queueRefresh();
+                } else self.handleInput(key);
+            },
+            .winsize => |ws| {
+                try self.vx.resize(self.alloc, self.tty.writer(), ws);
+                self.vx.queueRefresh();
+            },
+            else => {},
+        }
+    }
+
+    return false;
+}
+fn handleInput(self: *Self, key: Key) void {
+    if (self.context.is_paused) {
         if (key.matches('c', .{})) self.context.is_paused = false;
     } else if (key.matches('p', .{})) {
         self.context.is_paused = true;
     }
-}
-pub fn handleWindowResize(self: *Self, ws: vaxis.Winsize) !void {
-    try self.vx.resize(self.arena.allocator(), self.tty.writer(), ws);
-    self.vx.queueRefresh();
 }
 
 pub fn draw(self: *Self) !void {
@@ -87,7 +113,7 @@ pub fn draw(self: *Self) !void {
 
     if (win.width < MIN_SCREEN_WIDTH or win.height < MIN_SCREEN_HEIGHT) return error.TerminalSize;
 
-    try self.orchestrator.draw(win);
+    try self.main_view.draw(win);
 
     try self.vx.render(self.tty.writer());
     try self.tty.writer().flush();
