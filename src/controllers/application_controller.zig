@@ -16,17 +16,15 @@ context: ContextController,
 renderer: RenderController,
 
 pub fn init(init_p: *const std.process.Init) !Self {
-    var arena = std.heap.ArenaAllocator.init(init_p.gpa);
-    const alloc = arena.allocator();
-
     var self = Self{
-        .arena = arena,
+        .arena = init_p.arena.*,
         .io = init_p.io,
-        .context = try .init(alloc, init_p.io),
+        .context = undefined,
         .renderer = undefined,
     };
-    errdefer self.deinit();
 
+    const alloc = self.arena.allocator();
+    self.context = try .init(alloc, init_p.io);
     self.renderer = try .init(alloc, self.io, init_p.environ_map, &self.context);
 
     return self;
