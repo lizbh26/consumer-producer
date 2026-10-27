@@ -29,6 +29,7 @@ pub fn init(self: *Self, init_p: *const std.process.Init) !void {
 }
 
 pub fn deinit(self: *Self) void {
+    self.renderer.deinit();
     self.arena.deinit();
 }
 
