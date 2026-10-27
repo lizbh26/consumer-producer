@@ -5,6 +5,7 @@ const Window = vaxis.Window;
 const TextView = vaxis.widgets.TextView;
 
 const countUtf8 = @import("~").utils.countUtf8;
+const usizeTo = @import("~").utils.usizeTo;
 
 const Self = @This();
 
@@ -47,6 +48,7 @@ pub fn updateStyle(self: *Self, style: vaxis.Style) void {
 }
 
 pub fn draw(self: *Self, win: Window) void {
-    if (self.buffer.content.items.len > 0)
-        self.view.draw(win, self.buffer);
+    if (self.buffer.content.items.len < 0) return;
+    const child = win.child(.{ .width = @min(usizeTo(u16, self.getWidth()), win.width - 1), .height = 1 });
+    self.view.draw(child, self.buffer);
 }

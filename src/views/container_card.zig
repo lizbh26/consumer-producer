@@ -73,16 +73,14 @@ pub fn draw(self: *Self, win: Window) !void {
 
     const indexChild = container.child(.{
         .x_off = 1,
-        .width = @min(self._bufferIndexLabel.getWidth(), container.width - 2),
     });
     self._bufferIndexLabel.draw(indexChild);
 
     const contentWidth = usizeTo(u16, self._bufferContentLabel.getWidth());
-    if (contentWidth > 0 and contentWidth < container.width) {
+    if (contentWidth > 1 and contentWidth < container.width) {
         const contentChild = container.child(.{
             .x_off = container.width - contentWidth,
             .y_off = 1,
-            .width = contentWidth,
         });
         self._bufferContentLabel.draw(contentChild);
     }

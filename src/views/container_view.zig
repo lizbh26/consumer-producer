@@ -62,6 +62,7 @@ pub fn draw(self: *Self, win: Window) !void {
     const titleChild = winContainer.child(.{
         .x_off = @divFloor(winContainer.width - titleWidth, 2),
         .width = titleWidth,
+        .height = 1,
     });
     self._title.draw(titleChild);
 
