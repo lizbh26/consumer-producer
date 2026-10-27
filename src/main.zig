@@ -4,7 +4,8 @@ const AppController = @import("controllers/application_controller.zig");
 const RenderController = @import("controllers/render_controller.zig");
 
 pub fn main(init: std.process.Init) !void {
-    var controller = AppController.init(&init) catch {
+    var controller: AppController = undefined;
+    controller.init(&init) catch {
         std.log.err("El programa no pudo inicializarse.", .{});
         return;
     };

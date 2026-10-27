@@ -26,8 +26,13 @@ context: *ContextController,
 
 main_view: MainView,
 
-pub fn init(alloc: std.mem.Allocator, io: std.Io, environ_map: *std.process.Environ.Map, ctx: *ContextController) !Self {
-    var self = Self{
+pub fn init(
+    self: *Self,
+    alloc: std.mem.Allocator,
+    init_p: *const std.process.Init,
+    ctx: *ContextController,
+) !void {
+    self.* = .{
         .alloc = alloc,
 
         .buffer = undefined,
@@ -42,15 +47,13 @@ pub fn init(alloc: std.mem.Allocator, io: std.Io, environ_map: *std.process.Envi
             .container = &ctx.monitor.container,
         }),
     };
-    self.tty = try vaxis.Tty.init(io, &self.buffer);
+    self.tty = try vaxis.Tty.init(init_p.io, &self.buffer);
     errdefer self.tty.deinit();
 
-    self.vx = try vaxis.init(io, alloc, environ_map, .{});
+    self.vx = try vaxis.init(init_p.io, alloc, init_p.environ_map, .{});
     errdefer self.vx.deinit(alloc, self.tty.writer());
 
-    self.loop = .init(io, &self.tty, &self.vx);
-
-    return self;
+    self.loop = .init(init_p.io, &self.tty, &self.vx);
 }
 pub fn deinit(self: *Self) void {
     self.vx.deinit(self.alloc, self.tty.writer());

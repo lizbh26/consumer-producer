@@ -15,19 +15,17 @@ io: std.Io,
 context: ContextController,
 renderer: RenderController,
 
-pub fn init(init_p: *const std.process.Init) !Self {
-    var self = Self{
-        .arena = init_p.arena.*,
+pub fn init(self: *Self, init_p: *const std.process.Init) !void {
+    self.* = Self{
+        .arena = .init(init_p.gpa),
         .io = init_p.io,
         .context = undefined,
         .renderer = undefined,
     };
 
     const alloc = self.arena.allocator();
-    self.context = try .init(alloc, init_p.io);
-    self.renderer = try .init(alloc, self.io, init_p.environ_map, &self.context);
-
-    return self;
+    try self.context.init(alloc, self.io);
+    try self.renderer.init(alloc, init_p, &self.context);
 }
 
 pub fn deinit(self: *Self) void {

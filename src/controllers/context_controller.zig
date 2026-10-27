@@ -17,11 +17,9 @@ prev_tick: ?zeit.Instant,
 ellapsed_ms: i128,
 is_paused: bool,
 
-pub fn init(alloc: std.mem.Allocator, io: std.Io) !Self {
-    var arena = std.heap.ArenaAllocator.init(alloc);
-
-    var self = Self{
-        .monitor = try .init(arena.allocator()),
+pub fn init(self: *Self, alloc: std.mem.Allocator, io: std.Io) !void {
+    self.* = .{
+        .monitor = try .init(alloc),
         .consumer = undefined,
         .producer = undefined,
         .randomSource = .{ .io = io },
@@ -29,10 +27,8 @@ pub fn init(alloc: std.mem.Allocator, io: std.Io) !Self {
         .ellapsed_ms = 0,
         .is_paused = false,
     };
-    self.consumer = .init(arena.allocator(), &self.monitor, self.randomSource.interface());
-    self.producer = .init(arena.allocator(), &self.monitor, self.randomSource.interface());
-
-    return self;
+    self.consumer = .init(alloc, &self.monitor, self.randomSource.interface());
+    self.producer = .init(alloc, &self.monitor, self.randomSource.interface());
 }
 
 pub fn tick(self: *Self, now: zeit.Instant) !void {
