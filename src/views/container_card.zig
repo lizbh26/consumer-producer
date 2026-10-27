@@ -17,14 +17,13 @@ _alloc: std.mem.Allocator,
 _bufferIndexLabel: Label,
 _bufferContentLabel: Label,
 
-pub fn init(alloc: std.mem.Allocator, index: usize) !Self {
-    var self = Self{
+pub fn init(self: *Self, alloc: std.mem.Allocator, index: usize) !void {
+    self.* = .{
         ._alloc = alloc,
         ._bufferIndexLabel = .init(alloc),
         ._bufferContentLabel = .init(alloc),
     };
     try self._bufferIndexLabel.changeText(try std.fmt.allocPrint(alloc, "{d}", .{index}));
-    return self;
 }
 
 pub fn setContent(self: *Self, elem: ?*const Container.CONTAINER_ELEMENT) !void {

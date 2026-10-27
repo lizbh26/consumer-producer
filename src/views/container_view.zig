@@ -20,8 +20,8 @@ _scroll: u16,
 
 _current_width: u16,
 
-pub fn init(alloc: std.mem.Allocator, container: *const Container) !Self {
-    var self = Self{
+pub fn init(self: *Self, alloc: std.mem.Allocator, container: *const Container) !void {
+    self.* = Self{
         ._cards = undefined,
         ._container = container,
         ._title = .init(alloc),
@@ -30,11 +30,9 @@ pub fn init(alloc: std.mem.Allocator, container: *const Container) !Self {
     };
 
     for (0..self._cards.len) |i| {
-        self._cards[i] = try .init(alloc, i + 1);
+        try self._cards[i].init(alloc, i + 1);
     }
     try self._title.changeText("Vista del contenedor");
-
-    return self;
 }
 
 pub fn handleInput(self: *Self, key: Key) void {

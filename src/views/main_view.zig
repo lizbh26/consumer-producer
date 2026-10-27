@@ -24,11 +24,12 @@ const RenderContext = struct {
 ctx: RenderContext,
 container_view: ContainerView,
 
-pub fn init(alloc: std.mem.Allocator, ctx: RenderContext) !Self {
-    return .{
+pub fn init(self: *Self, alloc: std.mem.Allocator, ctx: RenderContext) !void {
+    self.* = .{
         .ctx = ctx,
-        .container_view = try .init(alloc, ctx.container),
+        .container_view = undefined,
     };
+    try self.container_view.init(alloc, ctx.container);
 }
 
 pub fn draw(self: *Self, win: Window) !void {

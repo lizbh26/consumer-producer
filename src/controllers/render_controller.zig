@@ -41,11 +41,7 @@ pub fn init(
         .loop = undefined,
 
         .context = ctx,
-        .main_view = try .init(alloc, .{
-            .consumer = &ctx.consumer,
-            .producer = &ctx.producer,
-            .container = &ctx.monitor.container,
-        }),
+        .main_view = undefined,
     };
     self.tty = try vaxis.Tty.init(init_p.io, &self.buffer);
     errdefer self.tty.deinit();
@@ -54,6 +50,12 @@ pub fn init(
     errdefer self.vx.deinit(alloc, self.tty.writer());
 
     self.loop = .init(init_p.io, &self.tty, &self.vx);
+
+    try self.main_view.init(alloc, .{
+        .consumer = &ctx.consumer,
+        .producer = &ctx.producer,
+        .container = &ctx.monitor.container,
+    });
 }
 pub fn deinit(self: *Self) void {
     self.vx.deinit(self.alloc, self.tty.writer());
@@ -81,7 +83,7 @@ pub fn handleEvents(self: *Self) !bool {
     while (try self.loop.tryEvent()) |event| {
         switch (event) {
             .key_press => |key| {
-                if (key.matches(Key.escape, .{})) {
+                if (key.matches(Key.escape, .{}) or key.matches('c', .{ .ctrl = true })) {
                     return true;
                 } else if (key.matches('l', .{ .ctrl = true })) {
                     self.vx.queueRefresh();
