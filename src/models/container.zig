@@ -14,7 +14,7 @@ len: usize,
 
 pub fn init() Self {
     return .{
-        .buffer = [_]CONTAINER_ELEMENT{0} ** CONTAINER_SIZE,
+        .buffer = @splat(0),
         .head = 0,
         .tail = 0,
         .len = 0,
