@@ -21,7 +21,7 @@ ms_worked: i128,
 random: std.Random,
 
 pub fn init(alloc: std.mem.Allocator, m: *Monitor, random: std.Random) Self {
-    var self = Self{
+    return Self{
         .alloc = alloc,
 
         .monitor = m,
@@ -36,8 +36,6 @@ pub fn init(alloc: std.mem.Allocator, m: *Monitor, random: std.Random) Self {
 
         .random = random,
     };
-    self.sleep();
-    return self;
 }
 
 pub fn tick(self: *Self, delta: i128) !void {
@@ -123,7 +121,7 @@ pub fn isBlocked(self: Self) bool {
     return self.blocked_by_monitor;
 }
 pub fn block(self: *Self) void {
-    self.blocked_by_monitor = false;
+    self.blocked_by_monitor = true;
 }
 pub fn unblock(self: *Self) void {
     self.blocked_by_monitor = false;

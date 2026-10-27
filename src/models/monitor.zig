@@ -49,11 +49,11 @@ pub fn take(self: *Self, p: *Process) ?Container.CONTAINER_ELEMENT {
 }
 
 fn cwait(p: *Process, c: *Condition) !void {
-    p.v_block(p);
+    p.block();
     try c.wait(p); // Fails if no memory is left to grow wait queue
 }
 fn csignal(alloc: std.mem.Allocator, c: *Condition) !void {
     const p = try c.signal();
-    p.v_unblock(p);
+    p.unblock();
     alloc.destroy(p);
 }

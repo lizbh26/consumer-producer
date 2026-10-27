@@ -13,6 +13,13 @@ pub fn implBy(impl_obj: anytype) Self {
     };
 }
 
+pub fn block(self: *Self) void {
+    self.v_block(self.impl);
+}
+pub fn unblock(self: *Self) void {
+    self.v_unblock(self.impl);
+}
+
 inline fn ProcessDelegate(impl_object: anytype) type {
     const ImplType = @TypeOf(impl_object);
     return struct {
