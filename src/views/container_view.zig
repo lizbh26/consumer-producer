@@ -6,88 +6,11 @@ const Window = vaxis.Window;
 
 const usizeTo = @import("~").utils.usizeTo;
 const Container = @import("~").models.Container;
+
 const Label = @import("components/label.zig");
+const ContainerCard = @import("container_card.zig");
 
 const Self = @This();
-
-const ContainerCard = struct {
-    const WIDTH = 12;
-    const HEIGHT = 4;
-
-    _alloc: std.mem.Allocator,
-    _bufferIndexLabel: Label,
-    _bufferContentLabel: Label,
-
-    pub fn init(alloc: std.mem.Allocator, index: usize) !ContainerCard {
-        var self = ContainerCard{
-            ._alloc = alloc,
-            ._bufferIndexLabel = .init(alloc),
-            ._bufferContentLabel = .init(alloc),
-        };
-        try self._bufferIndexLabel.changeText(try std.fmt.allocPrint(alloc, "{d}", .{index}));
-        return self;
-    }
-
-    pub fn setContent(self: *ContainerCard, elem: ?*const Container.CONTAINER_ELEMENT) !void {
-        var num = (elem orelse {
-            return self._bufferContentLabel.changeText("");
-        }).*;
-
-        var chars = try self._alloc.alloc(u8, 6);
-        chars[0] = '0';
-        chars[1] = 'x';
-
-        for (2..chars.len) |i| {
-            const hex = num & 0xF;
-            chars[i] = switch (hex) {
-                0 => '0',
-                1 => '1',
-                2 => '2',
-                3 => '3',
-                4 => '4',
-                5 => '5',
-                6 => '6',
-                7 => '7',
-                8 => '8',
-                9 => '9',
-                10 => 'A',
-                11 => 'B',
-                12 => 'C',
-                13 => 'D',
-                14 => 'F',
-                15 => 'E',
-                else => unreachable,
-            };
-            num >>= 4;
-        }
-        try self._bufferContentLabel.changeText(chars);
-    }
-
-    pub fn draw(self: *ContainerCard, win: Window) !void {
-        std.debug.assert(win.width >= WIDTH and win.height >= HEIGHT);
-
-        const container = win.child(.{
-            .width = win.width,
-            .height = win.height,
-            .border = .{ .where = .all, .style = .{ .fg = .{ .index = 255 } } },
-        });
-
-        const indexChild = container.child(.{
-            .x_off = 1,
-            .y_off = 1,
-            .width = @min(self._bufferIndexLabel.getWidth(), container.width - 2),
-        });
-        self._bufferIndexLabel.draw(indexChild);
-
-        const contentWidth = usizeTo(u16, self._bufferContentLabel.getWidth());
-        const contentChild = container.child(.{
-            .x_off = container.width - contentWidth,
-            .y_off = 2,
-            .width = contentWidth,
-        });
-        self._bufferContentLabel.draw(contentChild);
-    }
-};
 
 _cards: [Container.CONTAINER_SIZE]ContainerCard,
 _container: *const Container,
@@ -107,7 +30,7 @@ pub fn init(alloc: std.mem.Allocator, container: *const Container) !Self {
     };
 
     for (0..self._cards.len) |i| {
-        self._cards[i] = try .init(alloc, i);
+        self._cards[i] = try .init(alloc, i + 1);
     }
     try self._title.changeText("Vista del contenedor");
 
@@ -138,7 +61,6 @@ pub fn draw(self: *Self, win: Window) !void {
     const titleWidth = usizeTo(u16, self._title.getWidth());
     const titleChild = winContainer.child(.{
         .x_off = @divFloor(winContainer.width - titleWidth, 2),
-        .y_off = 1,
         .width = titleWidth,
     });
     self._title.draw(titleChild);
@@ -160,7 +82,7 @@ fn renderCards(self: *Self, winContainer: Window) !void {
 
             const child = winContainer.child(.{
                 .x_off = usizeTo(i17, measures.padLeft + (ContainerCard.WIDTH + 2) * j),
-                .y_off = usizeTo(i17, 1 + (ContainerCard.WIDTH + 2) * i),
+                .y_off = usizeTo(i17, 1 + (ContainerCard.HEIGHT + 2) * i),
                 .width = ContainerCard.WIDTH,
                 .height = ContainerCard.HEIGHT,
             });
