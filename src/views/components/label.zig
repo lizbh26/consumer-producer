@@ -49,6 +49,9 @@ pub fn updateStyle(self: *Self, style: vaxis.Style) void {
 
 pub fn draw(self: *Self, win: Window) void {
     if (self.buffer.content.items.len < 0) return;
-    const child = win.child(.{ .width = @min(usizeTo(u16, self.getWidth()), win.width - 1), .height = 1 });
+    const child = win.child(.{
+        .width = @min(usizeTo(u16, self.getWidth()), win.width),
+        .height = 1,
+    });
     self.view.draw(child, self.buffer);
 }
