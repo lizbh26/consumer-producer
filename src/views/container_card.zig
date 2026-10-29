@@ -27,38 +27,9 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, index: usize) !void {
 }
 
 pub fn setContent(self: *Self, elem: ?*const Container.CONTAINER_ELEMENT) !void {
-    var num = (elem orelse {
-        return self._bufferContentLabel.changeText("");
-    }).*;
-
-    var chars = try self._alloc.alloc(u8, 4);
-    chars[0] = '0';
-    chars[1] = 'x';
-
-    for (2..chars.len) |i| {
-        const hex = num & 0xF;
-        chars[i] = switch (hex) {
-            0 => '0',
-            1 => '1',
-            2 => '2',
-            3 => '3',
-            4 => '4',
-            5 => '5',
-            6 => '6',
-            7 => '7',
-            8 => '8',
-            9 => '9',
-            10 => 'A',
-            11 => 'B',
-            12 => 'C',
-            13 => 'D',
-            14 => 'F',
-            15 => 'E',
-            else => unreachable,
-        };
-        num >>= 4;
-    }
-    try self._bufferContentLabel.changeText(chars);
+    try self._bufferContentLabel.changeText(
+        if (elem) |e| try Container.elemToHex(self._alloc, e.*) else "",
+    );
 }
 
 pub fn draw(self: *Self, win: Window) !void {

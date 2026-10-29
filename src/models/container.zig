@@ -59,3 +59,35 @@ pub fn get(self: *Self, n: usize) !CONTAINER_ELEMENT {
 
     return self.buffer[i];
 }
+
+pub fn elemToHex(alloc: std.mem.Allocator, e: CONTAINER_ELEMENT) ![]const u8 {
+    var num = e;
+    var chars = try alloc.alloc(u8, 4);
+    chars[0] = '0';
+    chars[1] = 'x';
+
+    for (2..chars.len) |i| {
+        const hex = num & 0xF;
+        chars[i] = switch (hex) {
+            0 => '0',
+            1 => '1',
+            2 => '2',
+            3 => '3',
+            4 => '4',
+            5 => '5',
+            6 => '6',
+            7 => '7',
+            8 => '8',
+            9 => '9',
+            10 => 'A',
+            11 => 'B',
+            12 => 'C',
+            13 => 'D',
+            14 => 'F',
+            15 => 'E',
+            else => unreachable,
+        };
+        num >>= 4;
+    }
+    return chars;
+}
