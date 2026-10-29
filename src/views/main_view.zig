@@ -90,6 +90,7 @@ fn updateProducerCard(self: *Self) !void {
 fn updateConsumerCard(self: *Self) !void {
     const c = self.ctx.consumer;
     if (c.isBlocked()) {
+        try self.consumer_card.changeTime(0);
         try self.consumer_card.changeStatus("Bloqueado...");
     } else if (c.isSleeping()) {
         try self.consumer_card.changeTime(c.ms_to_sleep);

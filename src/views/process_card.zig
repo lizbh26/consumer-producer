@@ -30,6 +30,7 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, title: []const u8) !void {
 }
 
 pub fn changeTime(self: *Self, ellapsed_ms: i128) !void {
+    if (ellapsed_ms <= 0) return self._time.changeText("");
     try self._time.changeText(try time.time_to_string(self._alloc, time.milliseconds_to_time(ellapsed_ms)));
 }
 pub fn changeStatus(self: *Self, label: []const u8) !void {
