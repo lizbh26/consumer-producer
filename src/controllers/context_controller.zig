@@ -36,6 +36,8 @@ pub fn tick(self: *Self, now: zeit.Instant) !void {
         const delta_nano = now.timestamp - prev.timestamp;
         const delta_ms = zeit.instant(.{ .unix_nano = delta_nano }, &zeit.utc).milliTimestamp();
 
+        self.ellapsed_ms += delta_ms;
+
         try self.consumer.tick(delta_ms);
         try self.producer.tick(delta_ms);
     }

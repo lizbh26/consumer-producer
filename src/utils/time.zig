@@ -4,7 +4,7 @@ const zeit = @import("zeit");
 const leftpad = @import("leftpad.zig").leftpad;
 
 pub fn milliseconds_to_time(ms: i128) zeit.Time {
-    return zeit.instant(.{ .unix_nano = ms * 1000000 }, &zeit.utc).time();
+    return zeit.instant(.{ .unix_nano = @max(ms, 0) * 1000000 }, &zeit.utc).time();
 }
 
 pub fn time_to_string(alloc: std.mem.Allocator, diff: zeit.Time) ![]const u8 {

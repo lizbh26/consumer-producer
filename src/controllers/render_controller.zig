@@ -55,6 +55,7 @@ pub fn init(
         .consumer = &ctx.consumer,
         .producer = &ctx.producer,
         .container = &ctx.monitor.container,
+        .ellapsed = &ctx.ellapsed_ms,
     });
 }
 pub fn deinit(self: *Self) void {

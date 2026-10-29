@@ -3,13 +3,13 @@ const std = @import("std");
 const vaxis = @import("vaxis");
 const Window = vaxis.Window;
 
-const usize_to = @import("~").utils.usize_to;
-
 const Consumer = @import("~").models.Consumer;
 const Producer = @import("~").models.Producer;
 const Container = @import("~").models.Container;
 
 const Label = @import("components/label.zig");
+
+const Header = @import("header.zig");
 const ContainerView = @import("container_view.zig");
 const ProcessCard = @import("process_card.zig");
 
@@ -19,9 +19,11 @@ const RenderContext = struct {
     consumer: *const Consumer,
     producer: *const Producer,
     container: *const Container,
+    ellapsed: *const i128,
 };
 
 ctx: RenderContext,
+header: Header,
 container_view: ContainerView,
 producer_card: ProcessCard,
 consumer_card: ProcessCard,
@@ -29,6 +31,7 @@ consumer_card: ProcessCard,
 pub fn init(self: *Self, alloc: std.mem.Allocator, ctx: RenderContext) !void {
     self.* = .{
         .ctx = ctx,
+        .header = .init(alloc),
         .container_view = undefined,
         .producer_card = undefined,
         .consumer_card = undefined,
@@ -43,37 +46,40 @@ pub fn handleScroll(self: *Self, direction: i2) void {
 }
 
 pub fn draw(self: *Self, win: Window) !void {
-    const halfWidth = @divFloor(win.width, 2);
-    const halfHeight = @divFloor(win.height, 2);
+    try self.header.updateTime(self.ctx.ellapsed.*);
+    const headerContainer = win.child(.{ .height = 2 });
+    self.header.draw(headerContainer);
+
+    const mainContainer = win.child(.{ .y_off = 2 });
+    const halfWidth = @divFloor(mainContainer.width, 2);
+    const halfHeight = @divFloor(mainContainer.height, 2);
 
     try self.updateProducerCard();
-    const producerW, const producerH = self.producer_card.getDimensions();
-    const producerChild = win.child(.{
-        .x_off = @divFloor(halfWidth - producerW, 2),
-        .y_off = @divFloor(halfHeight - producerH, 2),
-        .width = producerW,
-        .height = producerH,
-    });
-    self.producer_card.draw(producerChild);
+    const producerChild = mainContainer.child(.{ .width = halfWidth, .height = halfHeight });
+    self.drawProducerCard(producerChild);
 
     try self.updateConsumerCard();
-    const consumerW, const consumerH = self.consumer_card.getDimensions();
-    const consumerChild = win.child(.{
-        .x_off = halfWidth + @divFloor(halfWidth - consumerW, 2),
-        .y_off = @divFloor(halfHeight - consumerH, 2),
-        .width = consumerW,
-        .height = consumerH,
-    });
-    self.consumer_card.draw(consumerChild);
+    const consumerChild = mainContainer.child(.{ .x_off = halfWidth, .height = halfHeight });
+    self.drawConsumerCard(consumerChild);
 
-    const containerChild = win.child(.{
+    const containerChild = mainContainer.child(.{
         .y_off = halfHeight,
-        .width = win.width,
-        .height = halfHeight - 1,
+        .width = mainContainer.width,
+        .height = halfHeight,
     });
     try self.container_view.draw(containerChild);
 }
 
+fn drawProducerCard(self: *Self, win: Window) void {
+    const producerW, const producerH = self.producer_card.getDimensions();
+    const producerChild = win.child(.{
+        .x_off = @divFloor(win.width - producerW, 2),
+        .y_off = @divFloor(win.height - producerH, 2),
+        .width = producerW,
+        .height = producerH,
+    });
+    self.producer_card.draw(producerChild);
+}
 fn updateProducerCard(self: *Self) !void {
     const p = self.ctx.producer;
     if (p.isBlocked()) {
@@ -87,6 +93,16 @@ fn updateProducerCard(self: *Self) !void {
     }
 }
 
+fn drawConsumerCard(self: *Self, win: Window) void {
+    const consumerW, const consumerH = self.consumer_card.getDimensions();
+    const consumerChild = win.child(.{
+        .x_off = @divFloor(win.width - consumerW, 2),
+        .y_off = @divFloor(win.height - consumerH, 2),
+        .width = consumerW,
+        .height = consumerH,
+    });
+    self.consumer_card.draw(consumerChild);
+}
 fn updateConsumerCard(self: *Self) !void {
     const c = self.ctx.consumer;
     if (c.isBlocked()) {
