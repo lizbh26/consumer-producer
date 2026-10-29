@@ -1,7 +1,6 @@
 const std = @import("std");
 
 const vaxis = @import("vaxis");
-const Key = vaxis.Key;
 const Window = vaxis.Window;
 
 const usize_to = @import("~").utils.usize_to;
@@ -37,6 +36,10 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, ctx: RenderContext) !void {
     try self.container_view.init(alloc, ctx.container);
     try self.producer_card.init(alloc, "Producidor");
     try self.consumer_card.init(alloc, "Consumidor");
+}
+
+pub fn handleScroll(self: *Self, direction: i2) void {
+    self.container_view.handleScroll(direction);
 }
 
 pub fn draw(self: *Self, win: Window) !void {

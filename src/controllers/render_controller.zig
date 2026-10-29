@@ -104,7 +104,14 @@ fn handleInput(self: *Self, key: Key) void {
         if (key.matches('c', .{})) self.context.is_paused = false;
     } else if (key.matches('p', .{})) {
         self.context.is_paused = true;
+    } else if (key.matches(Key.up, .{})) {
+        self.handleScroll(1);
+    } else if (key.matches(Key.down, .{})) {
+        self.handleScroll(-1);
     }
+}
+fn handleScroll(self: *Self, direction: i2) void {
+    self.main_view.handleScroll(direction);
 }
 
 pub fn draw(self: *Self) !void {

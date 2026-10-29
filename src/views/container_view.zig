@@ -1,7 +1,6 @@
 const std = @import("std");
 
 const vaxis = @import("vaxis");
-const Key = vaxis.Key;
 const Window = vaxis.Window;
 
 const usizeTo = @import("~").utils.usizeTo;
@@ -35,10 +34,10 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, container: *const Container) 
     try self._title.changeText("Vista del contenedor");
 }
 
-pub fn handleInput(self: *Self, key: Key) void {
-    if (key.matches(Key.down, .{})) {
+pub fn handleScroll(self: *Self, direction: i2) void {
+    if (direction == 1) {
         if (self.getCardTableMeasurements().rows - self._scroll > 1) self._scroll += 1;
-    } else if (key.matches(Key.up, .{})) {
+    } else if (direction == -1) {
         if (self._scroll > 0) self._scroll -= 1;
     }
 }
