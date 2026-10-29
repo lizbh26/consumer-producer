@@ -86,7 +86,7 @@ fn criticalTake(self: *Self) !bool {
     const ptr = try self.alloc.create(Process);
     ptr.* = Process.implBy(self);
     self.consumed = self.monitor.take(ptr);
-    return self.consumed == null;
+    return self.consumed != null;
 }
 
 fn sleep(self: *Self) void {
