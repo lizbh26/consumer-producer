@@ -17,7 +17,7 @@ buffer: TextView.Buffer,
 pub fn init(alloc: std.mem.Allocator) Self {
     return .{
         .alloc = alloc,
-        .view = .{},
+        .view = .{ .scroll_view = .{ .vertical_scrollbar = null } },
         .buffer = TextView.Buffer{},
     };
 }
@@ -33,7 +33,7 @@ pub fn getText(self: *const Self) []const u8 {
     return self.buffer.content.items;
 }
 pub fn getWidth(self: *const Self) usize {
-    return countUtf8(self.getText()) + 1;
+    return countUtf8(self.getText());
 }
 
 pub fn changeText(self: *Self, newText: []const u8) !void {
