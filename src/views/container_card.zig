@@ -10,8 +10,8 @@ const Label = @import("components/label.zig");
 
 const Self = @This();
 
-pub const WIDTH = 16;
-pub const HEIGHT = 4;
+pub const WIDTH = 12;
+pub const HEIGHT = 3;
 
 _alloc: std.mem.Allocator,
 _bufferIndexLabel: Label,
@@ -31,7 +31,7 @@ pub fn setContent(self: *Self, elem: ?*const Container.CONTAINER_ELEMENT) !void 
         return self._bufferContentLabel.changeText("");
     }).*;
 
-    var chars = try self._alloc.alloc(u8, 6);
+    var chars = try self._alloc.alloc(u8, 4);
     chars[0] = '0';
     chars[1] = 'x';
 
@@ -76,10 +76,9 @@ pub fn draw(self: *Self, win: Window) !void {
     self._bufferIndexLabel.draw(indexChild);
 
     const contentWidth = usizeTo(u16, self._bufferContentLabel.getWidth());
-    if (contentWidth > 1 and contentWidth < container.width) {
+    if (contentWidth > 1) {
         const contentChild = container.child(.{
             .x_off = container.width - contentWidth,
-            .y_off = 1,
         });
         self._bufferContentLabel.draw(contentChild);
     }

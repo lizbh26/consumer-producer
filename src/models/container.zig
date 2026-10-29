@@ -3,7 +3,7 @@ const std = @import("std");
 const Self = @This();
 
 pub const CONTAINER_SIZE = 20;
-pub const CONTAINER_ELEMENT = u32;
+pub const CONTAINER_ELEMENT = u16;
 
 pub const ContainerError = error{ WriteOverFlow, ReadUnderFlow, ReadOverFlow };
 

@@ -70,10 +70,10 @@ pub fn draw(self: *Self, win: Window) !void {
 fn renderCards(self: *Self, winContainer: Window) !void {
     const measures = self.getCardTableMeasurements();
 
-    var accHeight: u16 = ContainerCard.HEIGHT;
+    var accHeight: u16 = 2;
     var idx: usize = 0;
 
-    for (self._scroll..measures.rows) |i| {
+    for (self._scroll..measures.rows) |_| {
         if (accHeight > winContainer.height) break;
 
         for (0..measures.cols) |j| {
@@ -81,7 +81,7 @@ fn renderCards(self: *Self, winContainer: Window) !void {
 
             const child = winContainer.child(.{
                 .x_off = usizeTo(i17, measures.padLeft + (ContainerCard.WIDTH + 2) * j),
-                .y_off = usizeTo(i17, 1 + (ContainerCard.HEIGHT + 2) * i),
+                .y_off = usizeTo(i17, accHeight),
                 .width = ContainerCard.WIDTH,
                 .height = ContainerCard.HEIGHT,
             });
