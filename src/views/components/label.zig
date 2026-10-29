@@ -44,7 +44,11 @@ pub fn changeText(self: *Self, newText: []const u8) !void {
 }
 
 pub fn updateStyle(self: *Self, style: vaxis.Style) void {
-    self.buffer.updateStyle(self.alloc, .{ .begin = 0, .end = self.buffer.style_map.size, .style = style }) catch {};
+    self.buffer.updateStyle(self.alloc, .{
+        .begin = 0,
+        .end = self.buffer.content.items.len,
+        .style = style,
+    }) catch {};
 }
 
 pub fn draw(self: *Self, win: Window) void {
