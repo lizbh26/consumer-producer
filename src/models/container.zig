@@ -11,6 +11,7 @@ buffer: [CONTAINER_SIZE]CONTAINER_ELEMENT,
 head: usize,
 tail: usize,
 len: usize,
+max_len: usize,
 
 pub fn init() Self {
     return .{
@@ -18,6 +19,7 @@ pub fn init() Self {
         .head = 0,
         .tail = 0,
         .len = 0,
+        .max_len = CONTAINER_SIZE - 1,
     };
 }
 
@@ -25,11 +27,11 @@ pub fn isEmpty(self: Self) bool {
     return self.len == 0;
 }
 pub fn isFull(self: Self) bool {
-    return self.len == CONTAINER_SIZE - 1;
+    return self.len == self.max_len;
 }
 
-pub fn getNext(_: Self, n: usize) usize {
-    return if (n == CONTAINER_SIZE - 1) 0 else n + 1;
+pub fn getNext(self: Self, n: usize) usize {
+    return if (n == self.max_len) 0 else n + 1;
 }
 
 pub fn write(self: *Self, elem: CONTAINER_ELEMENT) !void {
@@ -38,7 +40,7 @@ pub fn write(self: *Self, elem: CONTAINER_ELEMENT) !void {
     self.tail = self.getNext(self.tail);
 
     self.len += 1;
-    std.debug.assert(self.len < CONTAINER_SIZE);
+    std.debug.assert(self.len <= self.max_len);
 }
 pub fn read(self: *Self) !CONTAINER_ELEMENT {
     if (self.isEmpty()) return ContainerError.ReadUnderFlow;
@@ -55,7 +57,7 @@ pub fn get(self: *Self, n: usize) !CONTAINER_ELEMENT {
     if (n > self.len) return ContainerError.ReadOverFlow;
 
     var i = n + self.head;
-    if (i >= CONTAINER_SIZE) i -= CONTAINER_SIZE;
+    if (i > self.max_len) i -= self.max_len + 1;
 
     return self.buffer[i];
 }

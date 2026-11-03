@@ -6,6 +6,7 @@ const Window = vaxis.Window;
 const Consumer = @import("~").models.Consumer;
 const Producer = @import("~").models.Producer;
 const Container = @import("~").models.Container;
+const Monitor = @import("~").models.Monitor;
 
 const Label = @import("components/label.zig");
 
@@ -19,6 +20,7 @@ const RenderContext = struct {
     consumer: *const Consumer,
     producer: *const Producer,
     container: *const Container,
+    monitor: *const Monitor,
     ellapsed: *const i128,
 };
 
@@ -84,22 +86,19 @@ fn drawProducerCard(self: *Self, win: Window) void {
 }
 fn updateProducerCard(self: *Self) !void {
     const p = self.ctx.producer;
+    const card = &self.producer_card;
     if (p.isBlocked()) {
-        try self.producer_card.changeStatus("Bloqueado...");
+        try card.changeTime(0);
+        try card.changeStatus("Bloqueado...");
     } else if (p.isSleeping()) {
-        try self.producer_card.changeTime(p.ms_to_sleep);
+        try card.changeTime(p.ms_to_sleep);
         try self.producer_card.changeStatus("Durmiendo...");
-    } else if (p.isProducing()) {
-        try self.producer_card.changeTime(p.ms_to_produce);
-        try self.producer_card.changeStatus(
-            try self.alloc.print(
-                "Produciendo... ({d}/{d})",
-                .{
-                    p.elems_produced + 1,
-                    p.elems_produced + p.left_to_produce,
-                },
-            ),
-        );
+    } else if (p.isTryingToWrite()) {
+        try card.changeTime(0);
+        try card.changeStatus("Intentando escribir...");
+    } else if (p.isWriting()) {
+        try card.changeTime(self.ctx.monitor.ms_left);
+        try card.changeStatus("Escribiendo...");
     }
 }
 
@@ -115,26 +114,18 @@ fn drawConsumerCard(self: *Self, win: Window) void {
 }
 fn updateConsumerCard(self: *Self) !void {
     const c = self.ctx.consumer;
+    const card = &self.consumer_card;
     if (c.isBlocked()) {
-        try self.consumer_card.changeTime(0);
-        try self.consumer_card.changeStatus("Bloqueado...");
+        try card.changeTime(0);
+        try card.changeStatus("Bloqueado...");
     } else if (c.isSleeping()) {
-        try self.consumer_card.changeTime(c.ms_to_sleep);
-        try self.consumer_card.changeStatus("Durmiendo...");
-    } else if (c.consumed) |e| {
-        try self.consumer_card.changeTime(c.ms_to_consume);
-        try self.consumer_card.changeStatus(
-            try self.alloc.print(
-                "Consumiendo {s} ({d}/{d})",
-                .{
-                    try Container.elemToHex(
-                        self.alloc,
-                        e,
-                    ),
-                    c.elems_consumed + 1,
-                    c.elems_consumed + c.left_to_consume,
-                },
-            ),
-        );
+        try card.changeTime(c.ms_to_sleep);
+        try card.changeStatus("Durmiendo...");
+    } else if (c.isTryingToRead()) {
+        try card.changeTime(0);
+        try card.changeStatus("Intentando leer...");
+    } else if (c.isReading()) {
+        try card.changeTime(self.ctx.monitor.ms_left);
+        try card.changeStatus("Leyendo...");
     }
 }
