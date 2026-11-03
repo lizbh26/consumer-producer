@@ -22,6 +22,7 @@ const RenderContext = struct {
     ellapsed: *const i128,
 };
 
+alloc: std.mem.Allocator,
 ctx: RenderContext,
 header: Header,
 container_view: ContainerView,
@@ -30,6 +31,7 @@ consumer_card: ProcessCard,
 
 pub fn init(self: *Self, alloc: std.mem.Allocator, ctx: RenderContext) !void {
     self.* = .{
+        .alloc = alloc,
         .ctx = ctx,
         .header = .init(alloc),
         .container_view = undefined,
@@ -89,7 +91,15 @@ fn updateProducerCard(self: *Self) !void {
         try self.producer_card.changeStatus("Durmiendo...");
     } else if (p.isProducing()) {
         try self.producer_card.changeTime(p.ms_to_produce);
-        try self.producer_card.changeStatus("Produciendo...");
+        try self.producer_card.changeStatus(
+            try self.alloc.print(
+                "Produciendo... ({d}/{d})",
+                .{
+                    p.elems_produced + 1,
+                    p.elems_produced + p.left_to_produce,
+                },
+            ),
+        );
     }
 }
 
@@ -111,8 +121,20 @@ fn updateConsumerCard(self: *Self) !void {
     } else if (c.isSleeping()) {
         try self.consumer_card.changeTime(c.ms_to_sleep);
         try self.consumer_card.changeStatus("Durmiendo...");
-    } else if (c.isConsuming()) {
+    } else if (c.consumed) |e| {
         try self.consumer_card.changeTime(c.ms_to_consume);
-        try self.consumer_card.changeStatus("Consumiendo...");
+        try self.consumer_card.changeStatus(
+            try self.alloc.print(
+                "Consumiendo {s} ({d}/{d})",
+                .{
+                    try Container.elemToHex(
+                        self.alloc,
+                        e,
+                    ),
+                    c.elems_consumed + 1,
+                    c.elems_consumed + c.left_to_consume,
+                },
+            ),
+        );
     }
 }

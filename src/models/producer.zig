@@ -12,6 +12,8 @@ monitor: *Monitor,
 blocked_by_monitor: bool,
 
 produced: ?Container.CONTAINER_ELEMENT,
+
+elems_produced: u8,
 left_to_produce: u8,
 
 ms_to_produce: i128,
@@ -28,6 +30,8 @@ pub fn init(alloc: std.mem.Allocator, m: *Monitor, random: std.Random) Self {
         .blocked_by_monitor = false,
 
         .produced = null,
+
+        .elems_produced = 0,
         .left_to_produce = 0,
 
         .ms_to_produce = 0,
@@ -62,6 +66,8 @@ pub fn tick(self: *Self, delta: i128) !void {
         return;
 
     self.left_to_produce -= 1;
+    self.elems_produced += 1;
+
     if (self.isFinished()) {
         self.sleep();
     } else {
@@ -81,10 +87,11 @@ fn tickProduction(self: *Self, delta: i128) void {
 fn kickstartProduction(self: *Self) void {
     std.debug.assert(!self.isProducing());
     self.left_to_produce = self.random.intRangeAtMost(u8, 3, 6);
+    self.elems_produced = 0;
     self.beginProducing();
 }
 fn beginProducing(self: *Self) void {
-    self.ms_to_produce = self.random.intRangeAtMost(i128, 2000, 8000);
+    self.ms_to_produce = self.random.intRangeAtMost(i128, 1000, 4000);
     self.produced = null;
 }
 fn produce(self: *Self) void {
@@ -103,7 +110,7 @@ fn criticalAppend(self: *Self) !bool {
 
 fn sleep(self: *Self) void {
     std.debug.assert(!self.isBlocked() and !self.isProducing() and !self.isSleeping());
-    self.ms_to_sleep = self.random.intRangeAtMost(i128, 2000, 8000);
+    self.ms_to_sleep = self.random.intRangeAtMost(i128, 2000, 5000);
     self.produced = null;
 }
 

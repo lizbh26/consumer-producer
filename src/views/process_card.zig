@@ -31,7 +31,10 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, title: []const u8) !void {
 
 pub fn changeTime(self: *Self, ellapsed_ms: i128) !void {
     if (ellapsed_ms <= 0) return self._time.changeText("");
-    try self._time.changeText(try time.time_to_string(self._alloc, time.milliseconds_to_time(ellapsed_ms)));
+    const time_str = try time.time_to_string(self._alloc, time.milliseconds_to_time(ellapsed_ms));
+    defer self._alloc.free(time_str);
+
+    try self._time.changeText(try self._alloc.print("Tiempo restante: {s}", .{time_str}));
 }
 pub fn changeStatus(self: *Self, label: []const u8) !void {
     try self._status.changeText(label);
@@ -70,7 +73,7 @@ pub fn draw(self: *Self, win: Window) void {
 
 pub fn getDimensions(self: *Self) struct { u16, u16 } {
     return .{
-        usizeTo(u16, @max(self._title.getWidth(), self._time.getWidth(), self._status.getWidth(), 28)) + 2,
+        usizeTo(u16, @max(self._title.getWidth(), self._time.getWidth(), self._status.getWidth(), 30)) + 2,
         5,
     };
 }

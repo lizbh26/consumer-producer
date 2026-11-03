@@ -12,6 +12,8 @@ monitor: *Monitor,
 blocked_by_monitor: bool,
 
 consumed: ?Container.CONTAINER_ELEMENT,
+
+elems_consumed: u8,
 left_to_consume: u8,
 
 ms_to_consume: i128,
@@ -28,6 +30,8 @@ pub fn init(alloc: std.mem.Allocator, m: *Monitor, random: std.Random) Self {
         .blocked_by_monitor = false,
 
         .consumed = null,
+
+        .elems_consumed = 0,
         .left_to_consume = 0,
 
         .ms_to_consume = 0,
@@ -56,6 +60,8 @@ pub fn tick(self: *Self, delta: i128) !void {
     }
 
     self.left_to_consume -= 1;
+    self.elems_consumed += 1;
+
     if (self.isFinished()) {
         self.sleep();
     } else {
@@ -75,12 +81,13 @@ fn tickConsumption(self: *Self, delta: i128) void {
 fn kickstartConsumption(self: *Self) !void {
     std.debug.assert(!self.isConsuming());
     self.left_to_consume = self.random.intRangeAtMost(u8, 3, 6);
+    self.elems_consumed = 0;
     try self.consume();
 }
 fn consume(self: *Self) !void {
     const ok = try self.criticalTake();
     if (ok)
-        self.ms_to_consume = self.random.intRangeAtMost(i128, 2000, 8000);
+        self.ms_to_consume = self.random.intRangeAtMost(i128, 2000, 4000);
 }
 fn criticalTake(self: *Self) !bool {
     const ptr = try self.alloc.create(Process);
@@ -91,7 +98,7 @@ fn criticalTake(self: *Self) !bool {
 
 fn sleep(self: *Self) void {
     std.debug.assert(!self.isBlocked() and !self.isConsuming() and !self.isSleeping());
-    self.ms_to_sleep = self.random.intRangeAtMost(i128, 2000, 8000);
+    self.ms_to_sleep = self.random.intRangeAtMost(i128, 1000, 5000);
     self.consumed = null;
 }
 
