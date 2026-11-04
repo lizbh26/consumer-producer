@@ -57,6 +57,7 @@ pub fn init(
         .container = &ctx.monitor.container,
         .monitor = &ctx.monitor,
         .ellapsed = &ctx.ellapsed_ms,
+        .is_paused = &ctx.is_paused,
     });
 }
 pub fn deinit(self: *Self) void {

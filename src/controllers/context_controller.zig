@@ -34,6 +34,7 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, io: std.Io) !void {
 }
 
 pub fn tick(self: *Self, now: zeit.Instant) !void {
+    if (self.is_paused) return;
     if (self.prev_tick) |prev| {
         const delta_nano = now.timestamp - prev.timestamp;
         const delta_ms = zeit.instant(.{ .unix_nano = delta_nano }, &zeit.utc).milliTimestamp();

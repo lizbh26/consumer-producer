@@ -24,6 +24,7 @@ const RenderContext = struct {
     container: *const Container,
     monitor: *const Monitor,
     ellapsed: *const i128,
+    is_paused: *const bool,
 };
 
 alloc: std.mem.Allocator,
@@ -52,7 +53,9 @@ pub fn handleScroll(self: *Self, direction: i2) void {
 }
 
 pub fn draw(self: *Self, win: Window) !void {
+    try self.header.updateControls(.{ .is_paused = self.ctx.is_paused.* });
     try self.header.updateTime(self.ctx.ellapsed.*);
+
     const headerContainer = win.child(.{ .height = 2 });
     self.header.draw(headerContainer);
 
