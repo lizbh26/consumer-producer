@@ -44,7 +44,7 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, ctx: RenderContext) !void {
         .consumer_card = undefined,
     };
     try self.container_view.init(alloc, ctx.container);
-    try self.producer_card.init(alloc, "Producidor");
+    try self.producer_card.init(alloc, "Productor");
     try self.consumer_card.init(alloc, "Consumidor");
 }
 
