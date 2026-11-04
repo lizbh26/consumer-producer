@@ -62,8 +62,8 @@ pub fn get(self: *Self, n: usize) !CONTAINER_ELEMENT {
     return self.buffer[i];
 }
 
-pub fn elemToHex(alloc: std.mem.Allocator, e: CONTAINER_ELEMENT) ![]const u8 {
-    var num = e;
+pub fn elemToHex(alloc: std.mem.Allocator, e: *const CONTAINER_ELEMENT) error{OutOfMemory}![]const u8 {
+    var num = e.*;
     var chars = try alloc.alloc(u8, 4);
     chars[0] = '0';
     chars[1] = 'x';

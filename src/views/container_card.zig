@@ -28,7 +28,7 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, index: usize) !void {
 
 pub fn setContent(self: *Self, elem: ?*const Container.CONTAINER_ELEMENT) !void {
     try self._bufferContentLabel.changeText(
-        if (elem) |e| try Container.elemToHex(self._alloc, e.*) else "",
+        if (elem) |e| try Container.elemToHex(self._alloc, e) else "",
     );
 }
 

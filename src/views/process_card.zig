@@ -73,7 +73,12 @@ pub fn draw(self: *Self, win: Window) void {
 
 pub fn getDimensions(self: *Self) struct { u16, u16 } {
     return .{
-        usizeTo(u16, @max(self._title.getWidth(), self._time.getWidth(), self._status.getWidth(), 30)) + 2,
+        usizeTo(u16, @max(
+            self._title.getWidth(),
+            self._time.getWidth(),
+            self._status.getWidth(),
+            30,
+        )) + 4,
         5,
     };
 }

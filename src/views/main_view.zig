@@ -8,6 +8,8 @@ const Producer = @import("~").models.Producer;
 const Container = @import("~").models.Container;
 const Monitor = @import("~").models.Monitor;
 
+const utils = @import("~").utils;
+
 const Label = @import("components/label.zig");
 
 const Header = @import("header.zig");
@@ -89,16 +91,31 @@ fn updateProducerCard(self: *Self) !void {
     const card = &self.producer_card;
     if (p.isBlocked()) {
         try card.changeTime(0);
-        try card.changeStatus("Bloqueado...");
+        try card.changeStatus(try self.alloc.print(
+            "Bloqueado por insuficiencia para {d} elementos.",
+            .{p.elems_to_write},
+        ));
     } else if (p.isSleeping()) {
         try card.changeTime(p.ms_to_sleep);
         try self.producer_card.changeStatus("Durmiendo...");
     } else if (p.isTryingToWrite()) {
         try card.changeTime(0);
-        try card.changeStatus("Intentando escribir...");
+        try card.changeStatus("Intentando entrar al monitor...");
     } else if (p.isWriting()) {
         try card.changeTime(self.ctx.monitor.ms_left);
-        try card.changeStatus("Escribiendo...");
+        try card.changeStatus(
+            try self.alloc.print(
+                "Escribiendo {s}...",
+                .{
+                    try utils.arrayToStr(
+                        Container.CONTAINER_ELEMENT,
+                        self.alloc,
+                        p.produced,
+                        Container.elemToHex,
+                    ),
+                },
+            ),
+        );
     }
 }
 
@@ -117,15 +134,23 @@ fn updateConsumerCard(self: *Self) !void {
     const card = &self.consumer_card;
     if (c.isBlocked()) {
         try card.changeTime(0);
-        try card.changeStatus("Bloqueado...");
+        try card.changeStatus(try self.alloc.print(
+            "Bloqueado por falta de {d} elementos",
+            .{c.elems_to_read},
+        ));
     } else if (c.isSleeping()) {
         try card.changeTime(c.ms_to_sleep);
         try card.changeStatus("Durmiendo...");
     } else if (c.isTryingToRead()) {
         try card.changeTime(0);
-        try card.changeStatus("Intentando leer...");
+        try card.changeStatus("Intentando entrar al monitor...");
     } else if (c.isReading()) {
         try card.changeTime(self.ctx.monitor.ms_left);
-        try card.changeStatus("Leyendo...");
+        try card.changeStatus(
+            try self.alloc.print(
+                "Leyendo {d} elementos...",
+                .{c.elems_to_read},
+            ),
+        );
     }
 }
