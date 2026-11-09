@@ -12,30 +12,34 @@ const MAX_TO_WRITE = 6;
 alloc: std.mem.Allocator,
 
 monitor: *Monitor,
+process_impl: Process,
+
 in_monitor: bool,
 blocked: bool,
 
 produced: []Container.CONTAINER_ELEMENT,
-write_completed: bool,
 elems_to_write: u8,
 
 ms_to_sleep: i128,
+ms_to_write: i128,
 
 random: std.Random,
 
-pub fn init(alloc: std.mem.Allocator, m: *Monitor, random: std.Random) Self {
-    return Self{
+pub fn init(self: *Self, alloc: std.mem.Allocator, m: *Monitor, random: std.Random) void {
+    self.* = .{
         .alloc = alloc,
 
         .monitor = m,
+        .process_impl = Process.implBy(self),
+
         .in_monitor = false,
         .blocked = false,
 
         .produced = &.{},
-        .write_completed = false,
         .elems_to_write = 0,
 
         .ms_to_sleep = 3000,
+        .ms_to_write = 0,
 
         .random = random,
     };
@@ -55,10 +59,14 @@ pub fn tick(self: *Self, delta: i128) !void {
     }
 
     if (self.isTryingToWrite()) {
-        self.monitor.write(self, &self.produced);
+        self.monitor.beginWrite(&self.process_impl, &self.produced);
         return;
     }
-    if (self.in_monitor) return;
+    if (self.in_monitor) {
+        self.ms_to_write = @max(self.ms_to_write - delta, 0);
+        if (self.ms_to_write <= 0) self.monitor.finishWrite(&self.process_impl, &self.produced);
+        return;
+    }
 
     self.elems_to_write = 0;
     self.sleep();
@@ -80,7 +88,7 @@ fn produce(self: *Self) !void {
             std.math.maxInt(Container.CONTAINER_ELEMENT),
         );
 
-    self.write_completed = false;
+    self.ms_to_write = self.random.intRangeAtMost(i128, 3000, 8000);
 }
 
 fn sleep(self: *Self) void {
@@ -94,7 +102,7 @@ pub fn isSleeping(self: Self) bool {
     return self.ms_to_sleep > 0;
 }
 pub fn isTryingToWrite(self: Self) bool {
-    return self.elems_to_write > 0 and !self.in_monitor and !self.write_completed;
+    return self.elems_to_write > 0 and !self.in_monitor and self.ms_to_write > 0;
 }
 pub fn isWriting(self: Self) bool {
     return self.in_monitor and !self.blocked;
@@ -120,7 +128,6 @@ pub fn unblock(self: *Self) void {
     self.blocked = false;
 }
 pub fn exitMonitor(self: *Self) void {
-    std.debug.assert(self.in_monitor and !self.blocked);
+    std.debug.assert(self.in_monitor and !self.blocked and self.ms_to_write <= 0);
     self.in_monitor = false;
-    self.write_completed = true;
 }

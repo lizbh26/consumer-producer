@@ -28,9 +28,9 @@ pub fn init(self: *Self, alloc: std.mem.Allocator, io: std.Io) !void {
         .is_paused = false,
     };
     const random = self.randomSource.interface();
-    self.monitor = try .init(alloc, random);
-    self.consumer = .init(alloc, &self.monitor, random);
-    self.producer = .init(alloc, &self.monitor, random);
+    self.monitor = try .init(alloc);
+    self.consumer.init(alloc, &self.monitor, random);
+    self.producer.init(alloc, &self.monitor, random);
 }
 
 pub fn tick(self: *Self, now: zeit.Instant) !void {
@@ -41,7 +41,6 @@ pub fn tick(self: *Self, now: zeit.Instant) !void {
 
         self.ellapsed_ms += delta_ms;
 
-        self.monitor.tick(delta_ms);
         try self.consumer.tick(delta_ms);
         try self.producer.tick(delta_ms);
     }

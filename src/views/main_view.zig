@@ -105,7 +105,7 @@ fn updateProducerCard(self: *Self) !void {
         try card.changeTime(0);
         try card.changeStatus("Intentando entrar al monitor...");
     } else if (p.isWriting()) {
-        try card.changeTime(self.ctx.monitor.ms_left);
+        try card.changeTime(p.ms_to_write);
         try card.changeStatus(
             try self.alloc.print(
                 "Escribiendo {s}...",
@@ -148,7 +148,7 @@ fn updateConsumerCard(self: *Self) !void {
         try card.changeTime(0);
         try card.changeStatus("Intentando entrar al monitor...");
     } else if (c.isReading()) {
-        try card.changeTime(self.ctx.monitor.ms_left);
+        try card.changeTime(c.ms_to_read);
         try card.changeStatus(
             try self.alloc.print(
                 "Leyendo {d} elementos...",

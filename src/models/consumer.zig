@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const Monitor = @import("monitor.zig");
+const Process = @import("process.zig");
 const Container = @import("container.zig");
 
 const Self = @This();
@@ -11,30 +12,34 @@ const MAX_TO_READ = 6;
 alloc: std.mem.Allocator,
 
 monitor: *Monitor,
+process_impl: Process,
+
 in_monitor: bool,
 blocked: bool,
 
 consumed: []Container.CONTAINER_ELEMENT,
-read_completed: bool,
 elems_to_read: u8,
 
 ms_to_sleep: i128,
+ms_to_read: i128,
 
 random: std.Random,
 
-pub fn init(alloc: std.mem.Allocator, m: *Monitor, random: std.Random) Self {
-    return Self{
+pub fn init(self: *Self, alloc: std.mem.Allocator, m: *Monitor, random: std.Random) void {
+    self.* = .{
         .alloc = alloc,
 
         .monitor = m,
+        .process_impl = Process.implBy(self),
+
         .in_monitor = false,
         .blocked = false,
 
         .consumed = &.{},
-        .read_completed = false,
         .elems_to_read = 0,
 
         .ms_to_sleep = 0,
+        .ms_to_read = 0,
 
         .random = random,
     };
@@ -53,12 +58,15 @@ pub fn tick(self: *Self, delta: i128) !void {
         return;
     }
 
-    // std.log.debug("{}{}", .{ self.in_monitor, self.blocked });
     if (self.isTryingToRead()) {
-        self.monitor.take(self, &self.consumed);
+        self.monitor.beginTake(&self.process_impl, &self.consumed);
         return;
     }
-    if (self.in_monitor) return;
+    if (self.in_monitor) {
+        self.ms_to_read = @max(self.ms_to_read - delta, 0);
+        if (self.ms_to_read <= 0) self.monitor.finishTake(&self.process_impl, &self.consumed);
+        return;
+    }
 
     self.elems_to_read = 0;
     self.sleep();
@@ -72,7 +80,7 @@ fn prepareConsumption(self: *Self) !void {
     std.debug.assert(self.isFinished());
     self.elems_to_read = self.random.intRangeAtMost(u8, MIN_TO_READ, MAX_TO_READ);
     self.consumed = try self.alloc.alloc(Container.CONTAINER_ELEMENT, self.elems_to_read);
-    self.read_completed = false;
+    self.ms_to_read = self.random.intRangeAtMost(i128, 2000, 6000);
 }
 
 fn sleep(self: *Self) void {
@@ -86,7 +94,7 @@ pub fn isSleeping(self: Self) bool {
     return self.ms_to_sleep > 0;
 }
 pub fn isTryingToRead(self: Self) bool {
-    return self.elems_to_read > 0 and !self.in_monitor and !self.read_completed;
+    return self.elems_to_read > 0 and !self.in_monitor and self.ms_to_read > 0;
 }
 pub fn isReading(self: Self) bool {
     return self.in_monitor and !self.blocked;
@@ -103,16 +111,14 @@ pub fn enterMonitor(self: *Self) void {
     self.in_monitor = true;
 }
 pub fn blockByWait(self: *Self) void {
-    std.debug.assert(self.in_monitor and !self.blocked);
+    std.debug.assert(!self.in_monitor and !self.blocked);
     self.blocked = true;
-    self.in_monitor = false;
 }
 pub fn unblock(self: *Self) void {
     std.debug.assert(!self.in_monitor and self.blocked);
     self.blocked = false;
 }
 pub fn exitMonitor(self: *Self) void {
-    std.debug.assert(self.in_monitor and !self.blocked);
+    std.debug.assert(self.in_monitor and !self.blocked and self.ms_to_read <= 0);
     self.in_monitor = false;
-    self.read_completed = true;
 }
