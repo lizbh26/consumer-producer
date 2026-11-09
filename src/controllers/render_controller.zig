@@ -80,6 +80,7 @@ pub fn startEventLoop(self: *Self) !void {
 }
 pub fn stopEventLoop(self: *Self) void {
     self.loop.stop();
+    self.vx.exitAltScreen(self.tty.writer()) catch {};
 }
 
 pub fn handleEvents(self: *Self) !bool {
